@@ -96,8 +96,8 @@ const withdrawMoney = (id, money) => {
     const userIndex = usersData.findIndex((user) => {
       return user.passportID === id;
     });
-    const userCash = usersData[userIndex].cash;
-    const userCredit = usersData[userIndex].credit;
+    let userCash = usersData[userIndex].cash;
+    let userCredit = usersData[userIndex].credit;
     if (userIndex !== -1) {
       if (money > userCash + userCredit) {
         throw Error("cannot withdraw that amount. try a lower amount");
@@ -123,19 +123,32 @@ const transferring = (transferringID, recievingID, money) => {
     throw Error("positive money only");
   } else {
     const usersData = loadUsers();
-    const transferringUser = usersData.findIndex((user) => {
+    const transferringUserIdx = usersData.findIndex((user) => {
       return user.passportID === transferringID;
     });
-    const recievingUser = usersData.findIndex((user) => {
+    const recievingUserIdx = usersData.findIndex((user) => {
       return user.passportID === recievingID;
     });
+    let userCash = usersData[transferringUserIdx].cash;
+    let userCredit = usersData[transferringUserIdx].credit;
 
-    if (transferringUser !== -1 && recievingUser !== -1) {
-      console.log("exists");
-      usersData[transferringUser].cash -= money;
-      usersData[recievingUser].cash += money;
-      saveUsers(usersData);
-      return [usersData[transferringUser], usersData[recievingUser]];
+    if (transferringUserIdx !== -1 && recievingUserIdx !== -1) {
+      if (money > userCash + userCredit) {
+        throw Error("cannot transfer that amount. try a lower amount");
+      } else if (userCash >= money) {
+        userCash -= money;
+        usersData[recievingUserIdx].cash += money;
+        saveUsers(usersData);
+        return [usersData[transferringUserIdx], usersData[recievingUserIdx]];
+      } else {
+        usersData[recievingUserIdx].cash += money;
+        money -= usersData[transferringUserIdx].cash;
+        // userCash = 0;
+        usersData[transferringUserIdx].cash = 0;
+        usersData[transferringUserIdx].credit -= money;
+        saveUsers(usersData);
+        return [usersData[transferringUserIdx], usersData[recievingUserIdx]];
+      }
     } else {
       throw Error("one or two users dont exist");
     }
