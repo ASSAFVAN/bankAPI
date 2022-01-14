@@ -58,7 +58,6 @@ const depositing = (id, cash) => {
   const userIndex = usersData.findIndex((user) => {
     return user.passportID === id;
   });
-
   if (userIndex !== -1) {
     usersData[userIndex].cash = cash;
     saveUsers(usersData);
@@ -68,10 +67,88 @@ const depositing = (id, cash) => {
   }
 };
 
+//Update credit
+const creditUpdate = (id, money) => {
+  if (money <= 0) {
+    throw Error("positive money only");
+  } else {
+    const usersData = loadUsers();
+    const userIndex = usersData.findIndex((user) => {
+      return user.passportID === id;
+    });
+    if (userIndex !== -1) {
+      usersData[userIndex].credit = usersData[userIndex].credit + money;
+      saveUsers(usersData);
+      return usersData[userIndex];
+    } else {
+      throw Error("cannot find user");
+    }
+  }
+};
+
+// Withdraw money
+
+const withdrawMoney = (id, money) => {
+  if (money < 0) {
+    throw Error("positive money only");
+  } else {
+    const usersData = loadUsers();
+    const userIndex = usersData.findIndex((user) => {
+      return user.passportID === id;
+    });
+    const userCash = usersData[userIndex].cash;
+    const userCredit = usersData[userIndex].credit;
+    if (userIndex !== -1) {
+      if (money > userCash + userCredit) {
+        throw Error("cannot withdraw that amount. try a lower amount");
+      } else if (userCash >= money) {
+        userCash -= money;
+        saveUsers(usersData);
+        return usersData[userIndex];
+      } else {
+        money -= userCash;
+        userCash = 0;
+        userCredit -= money;
+        saveUsers(usersData);
+        return usersData[userIndex];
+      }
+    } else {
+      throw Error("cannot find user");
+    }
+  }
+};
+
+const transferring = (transferringID, recievingID, money) => {
+  if (money < 0) {
+    throw Error("positive money only");
+  } else {
+    const usersData = loadUsers();
+    const transferringUser = usersData.findIndex((user) => {
+      return user.passportID === transferringID;
+    });
+    const recievingUser = usersData.findIndex((user) => {
+      return user.passportID === recievingID;
+    });
+
+    if (transferringUser !== -1 && recievingUser !== -1) {
+      console.log("exists");
+      usersData[transferringUser].cash -= money;
+      usersData[recievingUser].cash += money;
+      saveUsers(usersData);
+      return [usersData[transferringUser], usersData[recievingUser]];
+    } else {
+      throw Error("one or two users dont exist");
+    }
+  }
+};
+
 module.exports = {
   loadUsers,
   saveUsers,
   getUser,
   addUser,
   depositing,
+  creditUpdate,
+  withdrawMoney,
+  transferring,
 };
