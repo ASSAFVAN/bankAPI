@@ -45,6 +45,7 @@ const addUser = (body) => {
       passportID: uniqid(),
       cash: body.cash === undefined ? 0 : body.cash,
       credit: body.credit === undefined ? 0 : body.credit,
+      isActive: true,
     };
     usersData.push(newUser);
     saveUsers(usersData);
@@ -58,10 +59,15 @@ const depositing = (id, cash) => {
   const userIndex = usersData.findIndex((user) => {
     return user.passportID === id;
   });
+  const isActive = usersData[userIndex].isActive;
   if (userIndex !== -1) {
-    usersData[userIndex].cash = cash;
-    saveUsers(usersData);
-    return usersData[userIndex];
+    if (!isActive) {
+      throw Error("user is not active");
+    } else {
+      usersData[userIndex].cash = cash;
+      saveUsers(usersData);
+      return usersData[userIndex];
+    }
   } else {
     throw Error("cannot find user");
   }
@@ -76,10 +82,15 @@ const creditUpdate = (id, money) => {
     const userIndex = usersData.findIndex((user) => {
       return user.passportID === id;
     });
+    const isActive = usersData[userIndex].isActive;
     if (userIndex !== -1) {
-      usersData[userIndex].credit = usersData[userIndex].credit + money;
-      saveUsers(usersData);
-      return usersData[userIndex];
+      if (!isActive) {
+        throw Error("user is not active");
+      } else {
+        usersData[userIndex].credit = usersData[userIndex].credit + money;
+        saveUsers(usersData);
+        return usersData[userIndex];
+      }
     } else {
       throw Error("cannot find user");
     }
@@ -87,7 +98,6 @@ const creditUpdate = (id, money) => {
 };
 
 // Withdraw money
-
 const withdrawMoney = (id, money) => {
   if (money < 0) {
     throw Error("positive money only");
@@ -98,19 +108,24 @@ const withdrawMoney = (id, money) => {
     });
     let userCash = usersData[userIndex].cash;
     let userCredit = usersData[userIndex].credit;
+    const isActive = usersData[userIndex].isActive;
     if (userIndex !== -1) {
-      if (money > userCash + userCredit) {
-        throw Error("cannot withdraw that amount. try a lower amount");
-      } else if (userCash >= money) {
-        userCash -= money;
-        saveUsers(usersData);
-        return usersData[userIndex];
+      if (!isActive) {
+        throw Error("user is not active");
       } else {
-        money -= userCash;
-        userCash = 0;
-        userCredit -= money;
-        saveUsers(usersData);
-        return usersData[userIndex];
+        if (money > userCash + userCredit) {
+          throw Error("cannot withdraw that amount. try a lower amount");
+        } else if (userCash >= money) {
+          userCash -= money;
+          saveUsers(usersData);
+          return usersData[userIndex];
+        } else {
+          money -= userCash;
+          userCash = 0;
+          userCredit -= money;
+          saveUsers(usersData);
+          return usersData[userIndex];
+        }
       }
     } else {
       throw Error("cannot find user");
@@ -118,6 +133,7 @@ const withdrawMoney = (id, money) => {
   }
 };
 
+// transferring
 const transferring = (transferringID, recievingID, money) => {
   if (money < 0) {
     throw Error("positive money only");
@@ -154,6 +170,14 @@ const transferring = (transferringID, recievingID, money) => {
     }
   }
 };
+
+// const isActive = (id,bool) => {
+//   const isActive = usersData[userIndex].isActive;
+
+//   if (bool === false) {
+//     throw Error("user is not active");
+//   }
+// };
 
 module.exports = {
   loadUsers,
