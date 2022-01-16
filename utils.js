@@ -106,8 +106,6 @@ const withdrawMoney = (id, money) => {
     const userIndex = usersData.findIndex((user) => {
       return user.passportID === id;
     });
-    let userCash = usersData[userIndex].cash;
-    let userCredit = usersData[userIndex].credit;
     const isActive = usersData[userIndex].isActive;
     if (userIndex !== -1) {
       if (!isActive) {
@@ -116,13 +114,13 @@ const withdrawMoney = (id, money) => {
         if (money > userCash + userCredit) {
           throw Error("cannot withdraw that amount. try a lower amount");
         } else if (userCash >= money) {
-          userCash -= money;
+          usersData[userIndex].cash -= money;
           saveUsers(usersData);
           return usersData[userIndex];
         } else {
-          money -= userCash;
-          userCash = 0;
-          userCredit -= money;
+          money -= usersData[userIndex].cash;
+          usersData[userIndex].cash = 0;
+          usersData[userIndex].credit -= money;
           saveUsers(usersData);
           return usersData[userIndex];
         }
